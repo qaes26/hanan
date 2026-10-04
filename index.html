@@ -402,6 +402,48 @@ body {
   transform: scale(0.97);
 }
 
+.blackout-footer-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.auto-advance-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+}
+
+.auto-progress-bar {
+  width: 130px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.auto-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+.auto-progress-fill.active {
+  animation: progressFill 7.5s linear forwards;
+}
+
+@keyframes progressFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
 /* ========================================================
    STAGE 3: THE ROYAL ARCH OF HONOR (قوس الشرف الملكي الماسي)
    شكل مغاير كلياً للمستطيلات المعتادة
@@ -1003,10 +1045,16 @@ body {
       <div class="luminous-line" id="line-4">« كل الوفاء لمن كانت لنا أماً ومعلمة وقدوة »</div>
     </div>
 
-    <button class="enter-monument-btn" id="btn-enter-card">
-      <span>استعراض قوس الشرف الملكي</span>
-      <span>✦ ✨</span>
-    </button>
+    <div class="blackout-footer-wrap">
+      <button class="enter-monument-btn" id="btn-enter-card">
+        <span>استعراض قوس الشرف الملكي</span>
+        <span>✦ ✨</span>
+      </button>
+      <div class="auto-advance-hint">
+        <span>الانتقال تلقائي ✦</span>
+        <div class="auto-progress-bar"><div class="auto-progress-fill" id="progress-fill"></div></div>
+      </div>
+    </div>
   </div>
 
   <!-- ========================================================
@@ -1321,10 +1369,18 @@ body {
   const line4 = document.getElementById('line-4');
   const btnEnterCard = document.getElementById('btn-enter-card');
   const btnSkipBlackout = document.getElementById('btn-skip-blackout');
+  const progressFill = document.getElementById('progress-fill');
+  let autoCardTimer = null;
 
   function triggerMajesticReveal() {
+    clearTimeout(autoCardTimer);
     // Reset classes
     [starIcon, line1, line2, lineDiv, line3, line4].forEach(el => el.classList.remove('revealed', 'visible'));
+    if (progressFill) {
+      progressFill.classList.remove('active');
+      void progressFill.offsetWidth;
+      progressFill.classList.add('active');
+    }
 
     setTimeout(() => { starIcon.classList.add('visible'); audio.chime(523.25); }, 300);
     setTimeout(() => { line1.classList.add('revealed'); audio.chime(659.25); }, 900);
@@ -1332,13 +1388,23 @@ body {
     setTimeout(() => { lineDiv.classList.add('revealed'); }, 2800);
     setTimeout(() => { line3.classList.add('revealed'); audio.chime(1046.50); }, 3400);
     setTimeout(() => { line4.classList.add('revealed'); audio.chime(880); }, 4600);
+
+    // الانتقال التلقائي للبطاقة بدون الحاجة للنقر (Auto-advance)
+    autoCardTimer = setTimeout(() => {
+      enterCardStage();
+    }, 7600);
   }
 
   function finishRevealInstantly() {
+    clearTimeout(autoCardTimer);
     [starIcon, line1, line2, lineDiv, line3, line4].forEach(el => el.classList.add('revealed', 'visible'));
+    autoCardTimer = setTimeout(() => {
+      enterCardStage();
+    }, 1000);
   }
 
   function enterCardStage() {
+    clearTimeout(autoCardTimer);
     if (!isMusicPlaying) playSong();
     blackoutStage.classList.add('fade-out');
     launchGrandCelebration();
